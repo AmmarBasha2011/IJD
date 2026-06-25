@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>INEXJD Admin</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header h1 {
+            color: #1a365d;
+            font-size: 28px;
+        }
+
+        .version-tag {
+            background: #3182ce;
+            color: white;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 20px;
+        }
+
+        .sidebar {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            height: fit-content;
+        }
+
+        .sidebar h2 {
+            color: #2d3748;
+            font-size: 18px;
+            margin-bottom: 16px;
+        }
+
+        .table-list {
+            list-style: none;
+        }
+
+        .table-item {
+            padding: 12px 16px;
+            background: #f7fafc;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .table-item:hover {
+            background: #ebf4ff;
+            transform: translateX(4px);
+        }
+
+        .content-area {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        .section-title {
+            color: #2d3748;
+            margin-bottom: 16px;
+        }
+
+        .query-box {
+            margin-bottom: 24px;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 14px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 15px;
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        button {
+            background: #3182ce;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 8px;
+        }
+
+        button:hover {
+            background: #2c5282;
+        }
+
+        pre {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        th {
+            font-weight: 600;
+            color: #2d3748;
+            background: #f7fafc;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>INEXJD Admin</h1>
+            <div class="version-tag">v{{ version }}</div>
+        </header>
+
+        <div class="main-grid">
+            <aside class="sidebar">
+                <h2>Tables</h2>
+                <ul class="table-list">
+                    {% for table in tables %}
+                    <li class="table-item" data-table="{{ table }}">
+                        {{ table }}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </aside>
+
+            <main class="content-area">
+                <div class="query-box">
+                    <h2 class="section-title">SQL Query</h2>
+                    <textarea id="query-input" placeholder="SELECT * FROM your_table"></textarea>
+                    <button onclick="runQuery()">Run Query</button>
+                    <pre id="query-result"></pre>
+                </div>
+
+                <div id="table-preview">
+                    <h2 class="section-title">Table Data</h2>
+                    <p>Select a table from the sidebar, or run a query!</p>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        function runQuery() {
+            const query = document.getElementById('query-input').value;
+            const resultEl = document.getElementById('query-result');
+            
+            fetch('/api/query', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ query })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    resultEl.textContent = 'Error: ' + data.error;
+                } else {
+                    resultEl.textContent = JSON.stringify(data.results, null, 2);
+                }
+            });
+        }
+
+        document.querySelectorAll('.table-item').forEach(el => {
+            el.addEventListener('click', () => {
+                const tableName = el.dataset.table;
+                document.getElementById('query-input').value = `SELECT * FROM ${tableName}`;
+                runQuery();
+            });
+        });
+    </script>
+</body>
+</html>
